@@ -3,7 +3,7 @@
 AI时代的SEO。
 
 
-![geo-channel-source](./imsges/geo-channel-source.png) 
+![geo-channel-source](/ai/LLM/images//geo-channel-source.png) 
 
 内容策略*渠道策略：将AI善欢的内容发布到AI喜欢的渠道上
 1. 做好内容：做出AI喜欢、易采纳的内容；
