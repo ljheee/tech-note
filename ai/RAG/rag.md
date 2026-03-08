@@ -117,6 +117,7 @@ RAG步骤
 5.回调：方法调用后的触发操作，如执行成功后的后续操作。
 6.记忆：通过LangChain或额外组件实现记忆功能，记录之前的对话。
 7.代理：赋予大模型额外的功能，如调用其他工具或服务。
+8.输出解析器：自己决定输出JSON、CSV、XMLOutputParser等格式。
 
 第三方开源组件基于LangChain框架开发，兼容LangChain。常见的第三方组件包括lunching call、community和long graph。
 - langchain-core：核心语法库，包含大语言模型调用的基础功能。
@@ -125,26 +126,173 @@ RAG步骤
 - langgraph：用于构建图结构的数据库。
 - langserver/langsmith：用于部署和监控。
 
+```
 Langchain_connunity.docunent.loaders 获取网页文本（支持使用bs4解析），构建知识库；
 WebaseLoader
 https://docs.langchain.com/oss/python/integrations/document_loaders/web_base
-
+```
 
 vector_db.as_retriever()
-1.检索器封装了查询方法，提供了更全面的查询功能。
-2.通过检索器，可以更方便地构建查询语句和检索数据。
-3.检索器在语法之上进行了封装，简化了查询过程。
+1. 检索器封装了查询方法，提供了更全面的查询功能。
+2. 通过检索器，可以更方便地构建查询语句和检索数据。检索器在语法之上进行了封装，简化了查询过程。——类似mybatis Example？
+3. 检索器有很多类型（对应不同索引类型），比如按时序。
 
-PronptTemplate/ChatPronptTemplate（设定角色）/FewShotPronptTemplate
+PromptTemplate/ChatPromptTemplate（设定角色）/FewShotPromptTemplate
 不同的提示词模板适用于不同的场景和需求。
 样本提示词模板用于提供示例输入和输出(input+opuput+description)，帮助模型学习。通过给定样本，模型可以学习如何根据输入生成正确的输出。适用于需要少量数据进行训练的场景。
 
-用户输入的问题，自动向量化，并按相似度查询K个文档，和原始问题拼接入prompt。 传给大模型。
+都会将用户输入的问题，自动向量化，并按相似度查询K个文档，和原始问题拼接入prompt。 传给大模型。
+similarity_search_with_score_by_vector
+
+stuff_docunents_chain文档链
+- StuffDocumentsChain 是 LangChain 框架中处理多文档最基础且最常用的一种文档链。它通过将多个文档的内容直接拼接（Stuffing）并填充到 Prompt 中，最后一次性提交给大语言模型（LLM）进行处理。
+
 
 
 langchain支持的模型有三种，包括大模型、聊天模型和文本嵌入模型。
-3.大模型：输入和输出都是字符串，适用于文本生成任务。
-4.聊天模型：输入和输出包含用户和系统的信息，适用于对话生成任务。
-5.文本嵌入模型：将文本转换成向量，适用于文本相似度计算等任务。
+1. 大模型：输入和输出都是字符串，适用于文本生成任务。
+2. 聊天模型：输入和输出包含用户和系统的信息，适用于对话生成任务。
+3. 文本嵌入模型：将文本转换成向量，适用于文本相似度计算等任务。
 
+```
+from langchain_connunity.docunent_loaders import UnstructuredWordDocumentLoader
+from langchain_connunity.docunent_loaders import PyPDFLoader
+PyPDFLoader#load_and_split() 是按PDF页数切分。
+
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=200,
+    chunk_overlap=100,
+    length_function=len,
+    )
+```
+
+## chain
+链在内部把一系列的功能进行封装，而链的外部则又可以组合串联，链其实可以被视为LangChain中的一种基本功熊单元。
+通过管道符将一系列功能组合在一起，形成链式调用。管道符进行传递参数。
+基于runnable对象(langchain 0.2核心抽象)，实现方法的组合和调用。链中可以自定义runnable，干自己需要的事。
+
+0.2版本新语法：prompt | model | output_parser
+
+管道符在python中，会触发类中的魔法方法。__or__ , __ror__ 左边操作和右边操作。
+就是将管道符前面的数，传给管道符后面的function。
+链式调用缺点是不易调试。
+
+
+#### chain运用示例
+Connect your AI agents to the web
+https://www.tavily.com/ 允许agent在线查询
+
+旅游助手
+- 构建景点知识库：景点开放时间，建议游玩时间……
+- 借助tavily搜索天气信息
+- LLM生存旅游规划
+
+首先用LLM判断用户问题，是否需要查询天气，还是景点推荐or行程规划。
+- 你是一个旅游助手。需从用户问题中提取景点和咨询类型（天气/景点介绍/行程规划）
+- 你是专业旅游项问，请集合景点信息和天气生成建议。
+
+RunnableMap
+RunnableBranch 分支路由
+
+
+LLMMathChain将用户问题转换为数学问题，然后将数学问题转换为可以使用 Python的 numexpr 库执行的表达式。他用运行此代码的输出来回答问题。
+LLMMathChain就是在内置prompt里拼接里few shot（数学问题的样例）。
+
+
+create_sql_query_chain 创建时指定DB，提问的question可以制定查询的表
+- 将用户问题，转成SQL查询语句
+- 执行查询、返回结果。
+
+
+## agent
+智能体是一种利用大模型执行任务和做出决策的系统；
+可以提供不同的工具，给agent在需要时调用；agent根据用户问题决策何时调用哪个工具。
+
+https://smith.langchain.com/hub
+
+![langchain_create_agent](langchain_create_agent.png)
+智能体的执行逻辑包括管理工具、agent和工具的执行流程。
+管理工具负责分发任务，agent根据用户问题选择调用相应的工具。
+agent通过大模型构建执行思路，选择合适的工具进行查询并整合结果。
+
+RAG不同领域的知识增强，也可以作为一个个agent。
+
+
+langchain.core.tools 可以将py方法封装成Tool（小写的）；
+每个Tool都有name、description、func。
+
+MessaqesPlaceholder占位符，是给agent用于存储中间结果；agent验证执行结果时，将上一步结果拼进prompt，替换占位符。——一个prompt 多次使用时有差异。
+
+
+fron Langchain.tools inport tool （小写的）
+可以在方法上加上@tool，把py方法（需要增加注释，填写name、description）封装成Tool。
+
+
+## 聊天记录
+LLM是无状态的；
+聊天记录存储：通过RunnableWithMessageHistory创建聊天记录存储。
+获取聊天记录：通过get方法获取指定ID的聊天记录。
+
+
+ChatMessageHistory 保存了一个列表；每条记录分为user的message和 AI的message。
+MessaqesPlaceholder占位符，用于预留上一次对话的信息。
+
+在同一个窗口，存储的对话次数越多，装入下次对话prompt的上下文越长；需要取舍。
+
+get_session_history(session_id)
+save_nenory(filepath, session_id)
+load_nenory(filepath, session_id)
+
+
+
+## LangSmith
+是一个用于构建、调试和监控大语言模型（LLM）应用的平台，由LangChain 团队开发。它帮助开发者跟踪LLM的调用，性能和输出，优优提示词（Prompr）设计，并管理数据集和译估。
+通过LangSmith平台优化提示词并生成在线模板。
+
+
+
+## RAG问题及解法
+RAG执行流程：加载原始文档、读取文件、原始文档分割、文本向量化、向量数据存储、用户问题向量化、相似度匹配、问题相关文档提取、数据与原始问题拼接、提问与回答。
+RAG存在的问题：内容缺失、错过排名靠前的文档、提取内容与上下文无关、格式错误、回答内容不完整、未提取到答案、答案不具体或过于具体。
+- 向量构建过程问题：文档准确性、效率、分割颗粒度。——增加高质量知识数据、数据清洗、优化文档加载与分割。
+- 问答过程问题：错过排名靠前的文档、提取内容与上下文无关、格式错误、回答内容不完整、未提取到答案、答案不具体或过于具体。——优化提示词、增加召回数(topK)、数据重排。
+
+增加召回数,topK越大，消耗时间越长。
+
+
+高级RAG的实现方式：预索引和后索引
+- 预索引：查询重写（让LLM在不改变用户意图的情况下重新表述）、查询转移（问题拆分成多个关键词分别检索）、查询拓展（对原始问题进行拓展）。
+- 后索引：重新排序、摘要、融合。
+
+高级RAG的变体：TRAG、CRAG、CF-RAG、Graph RAG、RAG Fusion、RAG Retrieve。
+Graph RAG：利用知识图谱进行检索，适用于关系型数据。
+
+T-RAG树状结构能够更好地处理长文档和短文档的匹配问题。
+
+
+CRAG的工作流程
+1. 提出问题：用户向CRAG提出问题，CRAG进行检索和匹配。
+2. 文档匹配：CRAG检索相关文档，并对检索结果进行评估。
+3. 检索评估：通过（LLM）检索评估器判断检索结果的正确性、失败或模棱两可。
+4. 文档分割与整合：对匹配成功的文档进行分割和整合，生成最终回复。
+5. 错误处理：对匹配失败的文档，CRAG采用鲁棒性机制进行处理，通过搜索引擎搜索其他相关信息。
+
+Self-RAG的工作流程
+1. 提出问题：用户向Self-RAG提出问题，Self-RAG首先生成(3个)简单回复。
+2. 评估：向大模型进行再次提问，对回复进行评估，判断其正确性。
+3. 最优回复选择：选择最优的回复作为最终回复。
+4. 错误处理：对不确定或错误的回复，Self-RAG采用鲁棒性机制进行处理，通过搜索引擎搜索其他相关信息。
+
+
+检索RAG与微调FT的比较
+1. RAG：利用外部知识库进行动态检索，依赖于检索质量。
+2. FT：将知识植入模型，提高模型在特定领域的性能。
+3. 适用场景：RAG适用于动态更新的数据，FT适用于静态存储的数据。
+4. 数据要求：RAG对数据要求较低，FT对数据要求较高。
+5. 可解释性和道德隐私：RAG本质上不产生幻觉，FT可能产生幻觉；RAG不涉及道德和隐私问题，FT涉及道德和隐私问题。
+
+
+
+
+---
 document.querySelector('video').playbackRate = 1.6
