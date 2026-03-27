@@ -24,6 +24,31 @@ OpenClaw 选用的底层框架 pi-mono，在我看来就是"less structure, more
 
 背后的逻辑说白了就一句话：写代码这件事拆到底，就是读、写、改、跑四个动作。你让 AI 去理解一个项目，它自然会先 read 几个核心文件；发现 bug 了，edit 精确改指定行然后 bash 跑一把测试看看过不过；要做大重构，就 write 整个新文件覆盖掉旧的。日常编程 90% 的操作其实都能拆成这四个原语的排列组合。
 
+
+agent三层记忆架构是什么
+- 当前会话上下文
+- memory/YYYY-MM-DD.md 当天操作记录
+- MEMORY.md 长期规则，偏好/原则
+
+不只增，也要减; 形成执行习惯的东西，可以从MEMORY.md移除。
+用 Markdown 做持久记忆，无向量检索，确定性高，clone 即恢复。
+
+
+https://github.com/anthropics/skills/tree/main/skills/skill-creator
+之前的Skill-creator其实一直有个痛点，就是你生成完的Skills，其实是个黑盒，你完全不知道，这个Skills到底好不好用，它的质量怎么样，它的触发机制合不合理。
+新版的Skill-creator加了4个全新的能力，分别是：
+1. 评估系统，跑完直接告诉你这个skill到底行不行。
+2. 基准测试，把通过率、耗时、token用量，全都量化。
+3. 多代理并行测试，每个测试在干净的环境里独立跑，支持A/B盲评，结果不互相污染。
+4. 描述调优，可以自动帮你改skill描述，该触发的触发，不该触发的就别乱触发。
+
+https://github.com/yt-dlp/yt-dlp
+
+
+
+
+
+
 #### 四层架构
 除了极简的工具设计，pi-mono 在技术栈上也做了清晰的分层。
 https://github.com/badlogic/pi-mono
