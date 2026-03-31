@@ -35,6 +35,13 @@ P-Tuning v2在垂直领域的小样本任务（如对话模版、分类）上效
 P-Tuning v2 曾是国产模型（如 ChatGLM 系列）早期的常用方案。
 ChatGLM-6B也提供了全量微调 (Full Fine-tuning)：通常对应仓库中的 ds_train_finetune.sh 脚本。它会更新模型的所有参数，通常需要配合 DeepSpeed 进行分布式训练，对硬件要求极高（通常需要多张 A100/H100 显卡，显存需求远超 24GB）。
 
+## Supervised Fine-Tuning阶段
+SFT（监督微调，Supervised Fine-Tuning）是一种在预训练模型基础上，通过标注数据进行针对性训练以优化模型在特定任务或领域表现的技术。
+SFT (阶段)：是指用“指令-回答”对（如你的 train.json）来训练模型，让它学会听指令、说人话。train.json 数据集，本质上就是在做 SFT。
+
+LoRA (方法)：是执行 SFT 的一种高效方式。
+全量微调 (方法)：是执行 SFT 的另一种昂贵方式。
+
 
 ## 业界标准
 目前大语言模型（LLM）微调的业界事实标准（De Facto Standard）是 LoRA 及其变体（如 QLoRA）。
